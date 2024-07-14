@@ -3,37 +3,25 @@ package org.example;
 import org.example.util.ConnectionManager;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Statement;
 
 public class TransactionRunner {
     public static void main(String[] args) throws SQLException {
-        var deleteFlightSql = """
-                delete from practice.flight where id = ?;
-                """;
-        var deleteTicketsSql = """
-                delete from practice.ticket where flight_id = ?;
-                """;
-        long flightId = 9;
-        Connection connection = null;
-        PreparedStatement deleteFlightStm = null;
-        PreparedStatement deleteTicketsStatement = null;
+        long flightId = 8;
 
+        var deleteFlightSql = "delete from practice.flight where id = " + flightId;
+        var deleteTicketsSql = "delete from practice.ticket where flight_id = " + flightId;
+        Connection connection = null;
+        Statement statement = null;
         try {
             connection = ConnectionManager.open();
-            deleteFlightStm = connection.prepareStatement(deleteFlightSql);
-            deleteTicketsStatement = connection.prepareStatement(deleteTicketsSql);
-
             connection.setAutoCommit(false);
+            statement = connection.createStatement();
 
-            deleteFlightStm.setLong(1, flightId);
-            deleteTicketsStatement.setLong(1, flightId);
-
-            deleteTicketsStatement.executeUpdate();
-            if(true){
-                throw new RuntimeException("OOOOps");
-            }
-            deleteFlightStm.executeUpdate();
+            statement.addBatch(deleteTicketsSql);
+            statement.addBatch(deleteFlightSql);
+            int[] statements = statement.executeBatch();
             connection.commit();
         } catch (Exception e) {
             if(connection != null){
@@ -44,11 +32,8 @@ public class TransactionRunner {
             if(connection != null){
                 connection.close();
             }
-            if(deleteFlightStm != null){
-                deleteFlightStm.close();
-            }
-            if(deleteTicketsStatement != null){
-                deleteTicketsStatement.close();
+            if(statement != null){
+                statement.close();
             }
         }
     }
