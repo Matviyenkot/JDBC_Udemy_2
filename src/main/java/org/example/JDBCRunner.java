@@ -13,7 +13,12 @@ public class JDBCRunner
     public static void main( String[] args ) {
 //        List<Long> ticketsByFlightId = getTicketsByFlightId(2);
 //        System.out.println(ticketsByFlightId);
-        System.out.println(getFlightsBetween(LocalDate.of(2020, 07, 01).atStartOfDay(), LocalDateTime.now()));
+        try {
+            System.out.println(getFlightsBetween(LocalDate.of(2020, 07, 01).atStartOfDay(), LocalDateTime.now()));
+        }
+        finally {
+            ConnectionManager.closePool();
+        }
     }
 
     private static List<Long> getFlightsBetween(LocalDateTime start, LocalDateTime end){
@@ -23,7 +28,7 @@ public class JDBCRunner
                 where departure_date between ? and ?
                 """;
         List<Long> result = new ArrayList<>();
-        try (var connection = ConnectionManager.open();
+        try (var connection = ConnectionManager.get();
              var prepareStatement = connection.prepareStatement(sql)) {
 
             prepareStatement.setTimestamp(1, Timestamp.valueOf(start));
@@ -46,7 +51,7 @@ public class JDBCRunner
                 where flight_id = ?
                 """;
         List<Long> result = new ArrayList<>();
-        try (var connection = ConnectionManager.open();
+        try (var connection = ConnectionManager.get();
         var prepareStatement = connection.prepareStatement(sql)) {
 
             prepareStatement.setLong(1, flightId);
